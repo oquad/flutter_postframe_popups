@@ -1,7 +1,7 @@
 name: flutter_postframe_popups_example
 description: Demonstrates popups, size reporting, and declarative binding observers.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.12.2
@@ -10,8 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_postframe_popups:
-    path: ..
+  flutter_postframe_popups: ^0.2.0
 
 dev_dependencies:
   flutter_test:
