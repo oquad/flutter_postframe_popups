@@ -10,8 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_postframe_popups:
-    path: ../
+  flutter_postframe_popups: ^0.2.0
 
 dev_dependencies:
   flutter_test:
