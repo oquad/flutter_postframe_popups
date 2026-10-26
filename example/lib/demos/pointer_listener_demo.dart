@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_postframe_popups/flutter_postframe_popups.dart';
 
-/// Shows global pointer-down coordinates without consuming gestures.
+import '../content/pointer_event_details.dart';
+
+/// Inspects all routed pointer events without consuming gestures.
 class PointerListenerDemo extends StatefulWidget {
   /// Creates the pointer observation demo.
   const PointerListenerDemo({super.key});
@@ -11,19 +13,12 @@ class PointerListenerDemo extends StatefulWidget {
 }
 
 class _PointerListenerDemoState extends State<PointerListenerDemo> {
-  Offset? _position;
-
-  void _record(BuildContext _, PointerEvent event) {
-    if (event is PointerDownEvent) {
-      setState(() => _position = event.position);
-    }
-  }
+  PointerEvent? _event;
 
   @override
   Widget build(BuildContext context) => ObservedGestures(
-    onPointerEvent: _record,
-    child: Center(
-      child: Text(_position == null ? 'Tap anywhere' : 'Pointer: $_position'),
-    ),
+    onPointerEvent: (BuildContext _, PointerEvent event) =>
+        setState(() => _event = event),
+    child: PointerEventDetails(event: _event),
   );
 }

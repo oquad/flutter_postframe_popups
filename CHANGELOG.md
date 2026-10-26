@@ -1,5 +1,8 @@
 ## 0.3.0
 
+* Add triggerVisibleArea to callback, dialog, and sheet wrappers, with once-only geometric visibility gating and zero preserving first-frame behavior.
+* Format example pointer events as labeled, selectable fields and add a scroll-to-reveal visibility demo.
+
 * Add PostFrameSize with initial/changed layout sizes, per-frame coalescing, and an optional stable-child builder.
 * Add ObservedMemoryPressure for immediate app-owned cleanup, coalescing concurrent notifications.
 * Add ObservedGestures for passive global Flutter pointer observation.

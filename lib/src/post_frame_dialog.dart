@@ -16,6 +16,7 @@ typedef CustomShowDialog<T> =
 
 /// Builds [child] immediately and presents [dialog] after the first frame.
 ///
+/// [triggerVisibleArea] optionally waits for the target to enter the viewport.
 /// Presentation runs once per mounted instance, not on ordinary rebuilds.
 /// A null [customShowDialog] uses Flutter's `showDialog<T>`, which targets the
 /// root Navigator. Supply a presenter to configure routing and barrier options.
@@ -39,8 +40,9 @@ class PostFrameDialog<T> extends StatelessWidget {
     required this.dialog,
     this.onResult,
     this.onError,
+    this.triggerVisibleArea = 0,
     this.customShowDialog,
-  });
+  }) : assert(triggerVisibleArea >= 0 && triggerVisibleArea <= 1);
 
   /// Underlying screen content, built immediately in this widget's location.
   final Widget child;
@@ -55,6 +57,13 @@ class PostFrameDialog<T> extends StatelessWidget {
 
   /// Handles presenter and result-callback failures instead of FlutterError.
   final PostFrameErrorHandler? onError;
+
+  /// Fraction of [child]'s layout area required on screen before presenting.
+  ///
+  /// Zero preserves first-frame presentation; 0.5 waits for half and 1 for
+  /// complete visibility. Uses [PostFrameCallback.triggerVisibleArea]'s
+  /// geometric clip policy and still presents only once per mount.
+  final double triggerVisibleArea;
 
   /// Overrides presentation; null uses Flutter's `showDialog<T>`.
   final CustomShowDialog<T>? customShowDialog;
@@ -75,6 +84,10 @@ class PostFrameDialog<T> extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      PostFrameCallback(callback: _show, onError: onError, child: child);
+  Widget build(BuildContext context) => PostFrameCallback(
+    callback: _show,
+    onError: onError,
+    triggerVisibleArea: triggerVisibleArea,
+    child: child,
+  );
 }

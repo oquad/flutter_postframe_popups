@@ -21,6 +21,7 @@ PostFrameCallback(
 
 ```dart
 PostFrameDialog<String>(
+  triggerVisibleArea: 1,
   dialog: const CountryDialog(),
   onResult: showSelection,
   child: const Text('Country settings'),
@@ -42,6 +43,21 @@ PostFrameBottomSheet<String>(
 
 [Sheet demo](example/lib/demos/bottom_sheet_demo.dart) ·
 [Sheet content](example/lib/content/sort_sheet.dart)
+
+### Visible-area triggers
+
+Callback, dialog, and sheet accept `triggerVisibleArea` from `0.0` to `1.0`:
+
+- `0` (default): run after the first frame, even when offscreen.
+- `0.5`: wait until half the target's area is visible.
+- `1`: wait until the whole target is visible.
+
+Wrap the scrollable item itself to observe its area. Actions still run once
+per mount and do not scroll automatically. Lazy items must first be built.
+Visibility uses viewport and ancestor clip geometry rather than pixel occlusion.
+
+[Scroll-to-reveal demo](example/lib/demos/visibility_demo.dart) ·
+[Visibility policy](doc/visibility.md)
 
 ### Spotlight
 

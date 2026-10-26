@@ -17,6 +17,7 @@ typedef CustomShowBottomSheet<T> =
 
 /// Builds [child] immediately and presents [bottomSheet] after the first frame.
 ///
+/// [triggerVisibleArea] optionally waits for the target to enter the viewport.
 /// Presentation runs once per mounted instance, not on ordinary rebuilds.
 /// A null [customShowBottomSheet] uses Flutter's `showModalBottomSheet<T>`,
 /// which targets the nearest Navigator. Supply a presenter to configure route,
@@ -41,8 +42,9 @@ class PostFrameBottomSheet<T> extends StatelessWidget {
     required this.bottomSheet,
     this.onResult,
     this.onError,
+    this.triggerVisibleArea = 0,
     this.customShowBottomSheet,
-  });
+  }) : assert(triggerVisibleArea >= 0 && triggerVisibleArea <= 1);
 
   /// Underlying screen content, built immediately in this widget's location.
   final Widget child;
@@ -57,6 +59,13 @@ class PostFrameBottomSheet<T> extends StatelessWidget {
 
   /// Handles presenter and result-callback failures instead of FlutterError.
   final PostFrameErrorHandler? onError;
+
+  /// Fraction of [child]'s layout area required on screen before presenting.
+  ///
+  /// Zero preserves first-frame presentation; 0.5 waits for half and 1 for
+  /// complete visibility. Uses [PostFrameCallback.triggerVisibleArea]'s
+  /// geometric clip policy and still presents only once per mount.
+  final double triggerVisibleArea;
 
   /// Overrides presentation; null uses Flutter's `showModalBottomSheet<T>`.
   final CustomShowBottomSheet<T>? customShowBottomSheet;
@@ -77,6 +86,10 @@ class PostFrameBottomSheet<T> extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      PostFrameCallback(callback: _show, onError: onError, child: child);
+  Widget build(BuildContext context) => PostFrameCallback(
+    callback: _show,
+    onError: onError,
+    triggerVisibleArea: triggerVisibleArea,
+    child: child,
+  );
 }

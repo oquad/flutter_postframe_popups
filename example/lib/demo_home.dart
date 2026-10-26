@@ -11,6 +11,7 @@ import 'demos/measure_demo.dart';
 import 'demos/memory_pressure_demo.dart';
 import 'demos/pointer_listener_demo.dart';
 import 'demos/spotlight_demo.dart';
+import 'demos/visibility_demo.dart';
 
 /// Navigation shell for the independent usage demos.
 class DemoHome extends StatefulWidget {
@@ -50,6 +51,7 @@ class _DemoBody extends StatelessWidget {
     MemoryPressureDemo(),
     PointerListenerDemo(),
     AppLifecycleDemo(),
+    VisibilityDemo(),
   ];
 
   @override
@@ -83,6 +85,10 @@ class _DemoNavigation extends StatelessWidget {
     NavigationDestination(icon: Icon(Icons.memory), label: 'Memory'),
     NavigationDestination(icon: Icon(Icons.touch_app), label: 'Pointers'),
     NavigationDestination(icon: Icon(Icons.sync), label: 'Lifecycle'),
+    NavigationDestination(
+      icon: Icon(Icons.visibility_outlined),
+      label: 'Visibility',
+    ),
   ];
 
   @override

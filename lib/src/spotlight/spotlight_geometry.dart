@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import '../internal/render_ancestors.dart';
+import '../internal/render_clip_bounds.dart';
 import 'spotlight_target_not_visible_error.dart';
 
 /// Measured target geometry and its cutout in a chosen Overlay's coordinates.
@@ -116,11 +118,14 @@ void _requireContained(Rect bounds, Rect visible) {
 }
 
 void _requireVisibleAncestors(RenderBox target, Rect localRect) {
-  RenderObject child = target;
-  for (var parent = child.parent; parent != null; parent = parent.parent) {
+  for (final (child, parent) in renderAncestors(target)) {
     _requirePainted(parent, child);
-    _requireWithinClip(target, parent, localRect, _clipBounds(parent, child));
-    child = parent;
+    _requireWithinClip(
+      target,
+      parent,
+      localRect,
+      renderClipBounds(parent, child),
+    );
   }
 }
 
@@ -138,34 +143,6 @@ void _requireWithinClip(
     localRect,
   );
   _requireContained(bounds, clip);
-}
-
-Rect? _clipBounds(RenderObject parent, RenderObject child) {
-  final clip = _paintClip(parent, child);
-  final viewport = _viewportRect(parent);
-  if (viewport == null) {
-    return clip;
-  }
-
-  return clip?.intersect(viewport) ?? viewport;
-}
-
-Rect? _viewportRect(RenderObject object) {
-  if (object is! RenderBox) {
-    return null;
-  }
-
-  return identical(RenderAbstractViewport.maybeOf(object), object)
-      ? Offset.zero & object.size
-      : null;
-}
-
-Rect? _paintClip(RenderObject parent, RenderObject child) {
-  if (parent is RenderClipRect && parent.clipBehavior != Clip.none) {
-    return parent.clipper?.getClip(parent.size) ?? Offset.zero & parent.size;
-  }
-
-  return parent.describeApproximatePaintClip(child);
 }
 
 void _requireValidMask(Rect maskRect) {

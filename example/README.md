@@ -11,9 +11,12 @@ Start with the small usage demos:
 - [Memory pressure](lib/demos/memory_pressure_demo.dart)
 - [Global pointers](lib/demos/pointer_listener_demo.dart)
 - [App lifecycle](lib/demos/app_lifecycle_demo.dart)
+- [Visible-area triggers](lib/demos/visibility_demo.dart)
 
 Dialog/sheet content lives in `lib/content/`. Feedback callbacks and custom
 presenters live in `lib/support/`. `app.dart` and `demo_home.dart` contain the
 application scaffolding and navigation.
 
 The navigation scrolls horizontally on narrow screens to reach all demos.
+
+The pointer demo renders labeled, selectable diagnostic fields in a scrollable card.

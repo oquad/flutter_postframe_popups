@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_postframe_popups/flutter_postframe_popups.dart';
 import 'package:flutter_postframe_popups_example/app.dart';
+import 'package:flutter_postframe_popups_example/demos/visibility_demo.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -76,7 +77,9 @@ void main() {
       await _openDemo(tester, 'Pointers');
       await tester.tapAt(const Offset(100, 150));
       await tester.pump();
-      expect(find.text('Pointer: Offset(100.0, 150.0)'), findsOneWidget);
+      expect(find.text('PointerUpEvent'), findsOneWidget);
+      expect(find.text('position'), findsOneWidget);
+      expect(find.text('Offset(100.0, 150.0)'), findsWidgets);
 
       await _openDemo(tester, 'Lifecycle');
       expect(find.text('App state: resumed'), findsOneWidget);
@@ -94,6 +97,29 @@ void main() {
       }
       await tester.pump();
       expect(find.text('App state: resumed'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'visibility demo keeps initialized targets waiting until scrolling',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1200);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: VisibilityDemo())),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Callback at 50%'), findsOneWidget);
+      expect(find.text('Ready after the first frame'), findsNothing);
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -500),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Ready after the first frame'), findsOneWidget);
+      expect(find.text('Choose a country'), findsNothing);
     },
   );
 }

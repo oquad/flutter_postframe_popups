@@ -11,6 +11,7 @@ dart run dart_code_linter:metrics analyze lib example/lib test example/test \
 flutter test --no-pub
 flutter test --platform chrome --no-pub test/spotlight_test.dart \
   test/measure_test.dart test/memory_pressure_test.dart \
-  test/pointer_listener_test.dart test/app_lifecycle_test.dart
+  test/pointer_listener_test.dart test/app_lifecycle_test.dart \
+  test/visibility_trigger_test.dart
 (cd example && flutter test --no-pub)
 flutter pub publish --dry-run
