@@ -1,0 +1,170 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+
+import 'spotlight_target_not_visible_error.dart';
+
+/// Measured target geometry and its cutout in a chosen Overlay's coordinates.
+@internal
+class SpotlightGeometry {
+  /// Stores a validated local mask rectangle and its paint transform.
+  const SpotlightGeometry({required this.maskRect, required this.transform});
+
+  /// Measures layout size, validates visibility, and resolves mask insets.
+  factory SpotlightGeometry.measure(
+    RenderBox target,
+    RenderBox overlay,
+    EdgeInsets insets, {
+    OverlayChildLayoutInfo? layoutInfo,
+  }) {
+    _requireLaidOut(target);
+    _requirePaintedProxy(target);
+    final (size, transform) = _layoutData(target, overlay, layoutInfo);
+    final localRect = Offset.zero & size;
+    _requireVisibleTarget(target, overlay, localRect, transform);
+    final maskRect = insets.deflateRect(localRect);
+    _requireValidMask(maskRect);
+
+    return SpotlightGeometry(maskRect: maskRect, transform: transform);
+  }
+
+  /// The inset-adjusted rectangle in the target's local coordinate system.
+  final Rect maskRect;
+
+  /// Maps target-local coordinates into the selected Overlay.
+  final Matrix4 transform;
+}
+
+(Size, Matrix4) _layoutData(
+  RenderBox target,
+  RenderBox overlay,
+  OverlayChildLayoutInfo? info,
+) {
+  if (info != null) {
+    return (info.childSize, info.childPaintTransform);
+  }
+
+  return (target.size, target.getTransformTo(overlay));
+}
+
+void _requireVisibleTarget(
+  RenderBox target,
+  RenderBox overlay,
+  Rect localRect,
+  Matrix4 transform,
+) {
+  final bounds = MatrixUtils.transformRect(transform, localRect);
+  _requireValidBounds(bounds, transform);
+  _requireContained(bounds, Offset.zero & overlay.size);
+  _requireVisibleAncestors(target, localRect);
+}
+
+void _requireLaidOut(RenderBox target) {
+  if (!target.attached || !target.hasSize || target.size.isEmpty) {
+    throw SpotlightTargetNotVisibleError(
+      'The target has no positive layout size.',
+    );
+  }
+}
+
+void _requirePaintedProxy(RenderBox target) {
+  RenderBox current = target;
+  while (current is RenderProxyBox && current.child != null) {
+    final child = current.child!;
+    _requirePainted(current, child);
+    current = child;
+  }
+}
+
+void _requirePainted(RenderObject parent, RenderObject child) {
+  if (parent is RenderFollowerLayer) {
+    throw UnsupportedError(
+      'PostFrameSpotlight requires layout-time transforms; '
+      'CompositedTransformFollower establishes its transform during compositing.',
+    );
+  }
+  if (!parent.paintsChild(child)) {
+    throw SpotlightTargetNotVisibleError(
+      'An ancestor does not paint the target.',
+    );
+  }
+}
+
+void _requireValidBounds(Rect bounds, Matrix4 transform) {
+  if (!bounds.isFinite || bounds.isEmpty || transform.determinant() == 0) {
+    throw SpotlightTargetNotVisibleError(
+      'The paint transform has no finite area.',
+    );
+  }
+}
+
+void _requireContained(Rect bounds, Rect visible) {
+  final tolerance = visible.inflate(precisionErrorTolerance);
+  if (!tolerance.contains(bounds.topLeft) ||
+      !tolerance.contains(bounds.bottomRight)) {
+    throw SpotlightTargetNotVisibleError(
+      'Target $bounds is clipped by $visible.',
+    );
+  }
+}
+
+void _requireVisibleAncestors(RenderBox target, Rect localRect) {
+  RenderObject child = target;
+  for (var parent = child.parent; parent != null; parent = parent.parent) {
+    _requirePainted(parent, child);
+    _requireWithinClip(target, parent, localRect, _clipBounds(parent, child));
+    child = parent;
+  }
+}
+
+void _requireWithinClip(
+  RenderBox target,
+  RenderObject ancestor,
+  Rect localRect,
+  Rect? clip,
+) {
+  if (clip == null) {
+    return;
+  }
+  final bounds = MatrixUtils.transformRect(
+    target.getTransformTo(ancestor),
+    localRect,
+  );
+  _requireContained(bounds, clip);
+}
+
+Rect? _clipBounds(RenderObject parent, RenderObject child) {
+  final clip = _paintClip(parent, child);
+  final viewport = _viewportRect(parent);
+  if (viewport == null) {
+    return clip;
+  }
+
+  return clip?.intersect(viewport) ?? viewport;
+}
+
+Rect? _viewportRect(RenderObject object) {
+  if (object is! RenderBox) {
+    return null;
+  }
+
+  return identical(RenderAbstractViewport.maybeOf(object), object)
+      ? Offset.zero & object.size
+      : null;
+}
+
+Rect? _paintClip(RenderObject parent, RenderObject child) {
+  if (parent is RenderClipRect && parent.clipBehavior != Clip.none) {
+    return parent.clipper?.getClip(parent.size) ?? Offset.zero & parent.size;
+  }
+
+  return parent.describeApproximatePaintClip(child);
+}
+
+void _requireValidMask(Rect maskRect) {
+  if (!maskRect.isFinite || maskRect.isEmpty) {
+    throw ArgumentError(
+      'maskInsets must leave a finite, positive cutout size.',
+    );
+  }
+}

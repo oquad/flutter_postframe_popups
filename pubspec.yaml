@@ -1,0 +1,28 @@
+name: flutter_postframe_popups
+description: >-
+  Show a popup, highlight a button for a tutorial, 
+  or run a callback after the child's first frame is drawn.
+version: 0.1.0
+homepage: https://github.com/oquad/flutter_postframe_popups
+repository: https://github.com/oquad/flutter_postframe_popups
+issue_tracker: https://github.com/oquad/flutter_postframe_popups/issues
+
+environment:
+  sdk: ^3.12.2
+  flutter: '>=3.44.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  dart_code_linter: 4.4.2
+  flutter_lints: ^6.0.0
+
+topics:
+  - widgets
+  - lifecycle
+  - dialog
+  - async

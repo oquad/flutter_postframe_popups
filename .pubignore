@@ -1,0 +1,11 @@
+.git/
+.github/
+.dart_tool/
+.idea/
+.metadata
+*.iml
+*.lock
+build/
+coverage/
+example/.dart_tool/
+example/build/
