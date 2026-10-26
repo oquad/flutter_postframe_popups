@@ -1,9 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import 'demos/app_lifecycle_demo.dart';
 import 'demos/bottom_sheet_demo.dart';
 import 'demos/callback_demo.dart';
 import 'demos/dialog_demo.dart';
 import 'demos/focus_demo.dart';
+import 'demos/measure_demo.dart';
+import 'demos/memory_pressure_demo.dart';
+import 'demos/pointer_listener_demo.dart';
 import 'demos/spotlight_demo.dart';
 
 /// Navigation shell for the independent usage demos.
@@ -40,6 +46,10 @@ class _DemoBody extends StatelessWidget {
     BottomSheetDemo(),
     FocusDemo(),
     SpotlightDemo(),
+    MeasureDemo(),
+    MemoryPressureDemo(),
+    PointerListenerDemo(),
+    AppLifecycleDemo(),
   ];
 
   @override
@@ -69,10 +79,22 @@ class _DemoNavigation extends StatelessWidget {
     ),
     NavigationDestination(icon: Icon(Icons.keyboard), label: 'Focus'),
     NavigationDestination(icon: Icon(Icons.highlight), label: 'Spotlight'),
+    NavigationDestination(icon: Icon(Icons.straighten), label: 'Measure'),
+    NavigationDestination(icon: Icon(Icons.memory), label: 'Memory'),
+    NavigationDestination(icon: Icon(Icons.touch_app), label: 'Pointers'),
+    NavigationDestination(icon: Icon(Icons.sync), label: 'Lifecycle'),
   ];
 
   @override
-  Widget build(BuildContext context) => NavigationBar(
+  Widget build(BuildContext context) => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: SizedBox(width: _width(context), child: _navigation),
+  );
+
+  double _width(BuildContext context) =>
+      math.max(MediaQuery.sizeOf(context).width, _destinations.length * 104);
+
+  Widget get _navigation => NavigationBar(
     selectedIndex: selected,
     onDestinationSelected: onSelected,
     destinations: _destinations,

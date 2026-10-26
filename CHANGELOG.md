@@ -1,3 +1,13 @@
+## 0.3.0
+
+* Add PostFrameSize with initial/changed layout sizes, per-frame coalescing, and an optional stable-child builder.
+* Add ObservedMemoryPressure for immediate app-owned cleanup, coalescing concurrent notifications.
+* Add ObservedGestures for passive global Flutter pointer observation.
+* Add ObservedAppLifecycle with OS transitions and an optional state-aware builder.
+* Refactor Spotlight to compose PostFrameSize and remove its separate measurement key.
+* Share context-aware async error handling across callbacks and observers; unregister subscriptions on disposal.
+* Add focused native/Chrome tests, small demos, and binding design references. Keep the example linked to the local package.
+
 ## 0.1.0
 
 * Dismiss spotlights on cutout taps by default while preserving child taps; add dismissOnCutoutTap to retain the previous behavior.

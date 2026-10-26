@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-import 'post_frame_callback.dart';
+import 'post_frame_size.dart';
+import 'post_frame_types.dart';
 import 'spotlight/spotlight_clippers.dart';
 import 'spotlight/spotlight_geometry.dart';
 import 'spotlight/spotlight_mask.dart';
@@ -10,7 +11,7 @@ import 'spotlight/spotlight_target_not_visible_error.dart';
 
 /// Highlights [child] once after layout using an overlay with a shaped cutout.
 ///
-/// Measures the child's RenderBox layout bounds, not the union of descendant
+/// Uses [PostFrameSize] for the child's layout bounds, not the union of descendant
 /// painting. Positive [maskInsets] shrink the hole; negative values expand it
 /// for OverflowBox, shadows, or other intentional overflow. Insets and radii
 /// use target-local logical pixels before ancestor transforms are applied.
@@ -27,8 +28,8 @@ import 'spotlight/spotlight_target_not_visible_error.dart';
 /// Flutter's OverlayPortal layout builder.
 ///
 /// The cutout passes pointer events through. Taps inside the cutout or on the
-/// shaded area dismiss it by default. Disposal removes the owned overlay. There is no focus trap,
-/// route, scrolling, or automatic replay on rebuilds.
+/// shaded area dismiss it by default. Disposal removes the owned overlay.
+/// There is no focus trap, route, scrolling, or automatic replay on rebuilds.
 class PostFrameSpotlight extends StatefulWidget {
   /// Creates a spotlight with a rounded-rectangle cutout by default.
   const PostFrameSpotlight({
@@ -93,23 +94,33 @@ class PostFrameSpotlight extends StatefulWidget {
 
 class _PostFrameSpotlightState extends State<PostFrameSpotlight> {
   final _portal = OverlayPortalController();
-  final _targetKey = GlobalKey();
+  late final BuildContext _targetContext;
+  bool _started = false;
   Completer<void>? _session;
 
   @override
-  Widget build(BuildContext context) => PostFrameCallback(
-    callback: _show,
+  Widget build(BuildContext context) => PostFrameSize(
+    onMeasured: _show,
     onError: widget.onError,
     child: OverlayPortal.overlayChildLayoutBuilder(
       controller: _portal,
       overlayLocation: widget.overlayLocation,
       overlayChildBuilder: _buildOverlay,
-      child: KeyedSubtree(key: _targetKey, child: widget.child),
+      child: widget.child,
     ),
   );
 
-  Future<void> _show(BuildContext context) async {
-    _measure();
+  Future<void> _show(BuildContext context, Size size) async {
+    if (_started) {
+      return;
+    }
+    _started = true;
+    _targetContext = context;
+    _measure(size);
+    await _present(context);
+  }
+
+  Future<void> _present(BuildContext context) async {
     final onDismissed = widget.onDismissed;
     final session = Completer<void>();
     _session = session;
@@ -120,9 +131,6 @@ class _PostFrameSpotlightState extends State<PostFrameSpotlight> {
     }
   }
 
-  RenderBox get _target =>
-      _targetKey.currentContext!.findRenderObject()! as RenderBox;
-
   RenderBox get _overlay =>
       Overlay.of(
             context,
@@ -131,16 +139,17 @@ class _PostFrameSpotlightState extends State<PostFrameSpotlight> {
           ).context.findRenderObject()!
           as RenderBox;
 
-  SpotlightGeometry _measure([OverlayChildLayoutInfo? layoutInfo]) =>
+  SpotlightGeometry _measure(Size size, [OverlayChildLayoutInfo? layoutInfo]) =>
       SpotlightGeometry.measure(
-        _target,
+        _targetContext.findRenderObject()! as RenderBox,
         _overlay,
         widget.maskInsets.resolve(Directionality.of(context)),
+        size: size,
         layoutInfo: layoutInfo,
       );
 
   Widget _maskFor(OverlayChildLayoutInfo info) => SpotlightMask(
-    geometry: _measure(info),
+    geometry: _measure(info.childSize, info),
     clipper: widget.clipper,
     color: widget.barrierColor,
     label: widget.barrierLabel,

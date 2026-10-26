@@ -2,20 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-/// A post-frame callback that may complete synchronously or asynchronously.
-typedef PostFrameCallbackFunction =
-    FutureOr<void> Function(BuildContext context);
+import 'internal/run_post_frame_action.dart';
+import 'post_frame_types.dart';
 
-/// Handles a synchronous throw or an error from the returned future.
-///
-/// Returning normally marks the error as handled. This handler is synchronous.
-typedef PostFrameErrorHandler =
-    void Function(Object error, StackTrace stackTrace);
-
-/// Schedules [callback] after layout, never inline or during build.
-///
-/// An injected scheduler must eventually invoke the callback at most once.
-typedef PostFrameScheduler = void Function(VoidCallback callback);
+export 'post_frame_types.dart';
 
 void _scheduleAfterFrame(VoidCallback callback) {
   WidgetsBinding.instance.addPostFrameCallback(
@@ -87,50 +77,8 @@ class _PostFrameCallbackState extends State<PostFrameCallback> {
       return;
     }
     _started = true;
-    // Observe the complete returned future inside _run. No async-void callback
-    // is passed to Flutter's synchronous scheduler.
-    unawaited(_run(widget.callback, widget.onError));
-  }
-
-  @pragma('vm:notify-debugger-on-exception')
-  Future<void> _run(
-    PostFrameCallbackFunction callback,
-    PostFrameErrorHandler? onError,
-  ) async {
-    try {
-      await callback(context);
-    } catch (error, stackTrace) {
-      _handleError(error, stackTrace, onError);
-    }
-  }
-
-  static void _handleError(
-    Object error,
-    StackTrace stackTrace,
-    PostFrameErrorHandler? onError,
-  ) {
-    try {
-      (onError ?? _reportActionError).call(error, stackTrace);
-    } catch (handlerError, handlerStackTrace) {
-      _reportActionError(error, stackTrace);
-      _reportHandlerError(handlerError, handlerStackTrace);
-    }
-  }
-
-  static void _reportActionError(Object error, StackTrace stackTrace) =>
-      _report(error, stackTrace, 'while running a PostFrame callback');
-
-  static void _reportHandlerError(Object error, StackTrace stackTrace) =>
-      _report(error, stackTrace, 'while handling a PostFrame callback error');
-
-  static void _report(Object error, StackTrace stackTrace, String description) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'flutter_postframe_popups',
-        context: ErrorDescription(description),
-      ),
-    );
+    // Observe the complete returned future in the shared runner. No async-void
+    // callback is passed to Flutter's synchronous scheduler.
+    unawaited(runPostFrameAction(widget.callback, context, widget.onError));
   }
 }

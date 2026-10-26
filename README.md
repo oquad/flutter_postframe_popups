@@ -74,6 +74,76 @@ shared `onError` policy. Automatic scrolling is not implemented.
 [Geometry and visibility](doc/spotlight.md) ·
 [PostFrameScrollTo plan](doc/roadmap.md)
 
+### Measure
+
+```dart
+PostFrameSize(
+  builder: (context, size, child) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [child, Text(size?.toString() ?? 'Measuring')],
+  ),
+  child: const Text('Measured content'),
+)
+```
+
+Measures the stable child after layout, starting with `null` in the builder.
+Only distinct sizes update it. Optional `onMeasured(context, size)` supports
+sync/async callbacks. Keep the target's constraints independent of its measured
+size; a post-frame builder necessarily updates on a following frame.
+
+[Measure demo](example/lib/demos/measure_demo.dart)
+
+### Memory pressure
+
+```dart
+ObservedMemoryPressure(
+  onMemoryPressure: releaseCachedPreviews,
+  child: const Text('Preview library'),
+)
+```
+
+Release app-owned caches or histories in your callback. Flutter already clears
+its ordinary image cache. Overlapping notifications coalesce while cleanup is
+running. No state-management dependency or automatic deletion of app state.
+
+[Memory demo](example/lib/demos/memory_pressure_demo.dart) ·
+[App-owned cache](example/lib/content/preview_cache.dart)
+
+### Global pointer events
+
+```dart
+ObservedGestures(
+  onPointerEvent: recordPointer,
+  child: const Text('Analytics workspace'),
+)
+```
+
+Observes Flutter-routed events across the app without consuming gestures.
+Mount once near the app root. Events consumed entirely by native views are
+outside this contract; the widget does not store or transmit events.
+
+[Pointer demo](example/lib/demos/pointer_listener_demo.dart)
+
+### App lifecycle
+
+```dart
+ObservedAppLifecycle(
+  onStateChanged: updatePlayback,
+  child: const Text('Player'),
+)
+```
+
+Optional `builder(context, state, child)` exposes the current OS lifecycle
+state declaratively. Callbacks receive transitions without an initial replay.
+Handle inactive/hidden states when appropriate; shutdown notifications are
+not guaranteed.
+
+[Lifecycle demo](example/lib/demos/app_lifecycle_demo.dart)
+
+Memory, pointer, and lifecycle subscriptions react immediately while mounted;
+they do not wait for a rendered frame. All use the shared `onError` policy.
+See [binding behavior and design references](doc/bindings.md).
+
 ### Presentation options
 
 Use `customShowDialog` or `customShowBottomSheet` to configure Flutter's native
@@ -92,7 +162,9 @@ customShowDialog: ({required context, required builder}) => showDialog<String>(
 
 ### Behavior
 
-- Runs once per mount. Rebuilds do not repeat it; a new key starts a new lifecycle.
+- Callback, dialog, sheet, and spotlight presentation run once per mount.
+  Measurement follows distinct sizes; OS and pointer subscriptions stay active
+  until disposal. Rebuilds update callbacks without duplicating subscriptions.
 - `onResult(context, value)` receives the typed result, including null on dismissal,
   while the wrapper remains mounted.
 - `callback` and `onResult` may be async. Return or await work whose errors should

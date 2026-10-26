@@ -51,4 +51,56 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'binding demos measure, release memory, observe pointers and OS state',
+    (tester) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpWidget(const PostFrameExample());
+      await tester.pumpAndSettle();
+      await _openDemo(tester, 'Measure');
+      expect(find.text('Measured: Size(180.0, 72.0)'), findsOneWidget);
+
+      await _openDemo(tester, 'Memory');
+      expect(find.text('Cached previews: 4'), findsOneWidget);
+      tester.binding.handleMemoryPressure();
+      await tester.pump();
+      expect(find.text('Cached previews: 0'), findsOneWidget);
+      await tester.tap(find.text('Refill previews'));
+      await tester.pump();
+      expect(find.text('Cached previews: 4'), findsOneWidget);
+      await tester.tap(find.text('Release previews'));
+      await tester.pump();
+      expect(find.text('Cached previews: 0'), findsOneWidget);
+
+      await _openDemo(tester, 'Pointers');
+      await tester.tapAt(const Offset(100, 150));
+      await tester.pump();
+      expect(find.text('Pointer: Offset(100.0, 150.0)'), findsOneWidget);
+
+      await _openDemo(tester, 'Lifecycle');
+      expect(find.text('App state: resumed'), findsOneWidget);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      expect(find.text('App state: inactive'), findsOneWidget);
+      for (final state in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pump();
+      expect(find.text('App state: resumed'), findsOneWidget);
+    },
+  );
+}
+
+Future<void> _openDemo(WidgetTester tester, String name) async {
+  final destination = find.text(name);
+  await tester.ensureVisible(destination);
+  await tester.tap(destination);
+  await tester.pumpAndSettle();
 }

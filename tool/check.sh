@@ -9,6 +9,8 @@ dart run dart_code_linter:metrics analyze lib example/lib test example/test \
   --fatal-warnings --fatal-style --fatal-performance \
   --set-exit-on-violation-level=warning
 flutter test --no-pub
-flutter test --platform chrome --no-pub test/spotlight_test.dart
+flutter test --platform chrome --no-pub test/spotlight_test.dart \
+  test/measure_test.dart test/memory_pressure_test.dart \
+  test/pointer_listener_test.dart test/app_lifecycle_test.dart
 (cd example && flutter test --no-pub)
 flutter pub publish --dry-run

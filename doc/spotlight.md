@@ -1,7 +1,7 @@
 # Spotlight geometry
 
-PostFrameSpotlight builds its child normally, then measures that child's first
-RenderBox after layout. The overlay belongs to OverlayPortal and disappears
+PostFrameSpotlight builds its child normally and receives its first layout
+measurement through PostFrameSize. The overlay belongs to OverlayPortal and disappears
 when the wrapper is removed. The rounded-rectangle clipper is the default;
 SpotlightOvalClipper supplies a true ellipse.
 

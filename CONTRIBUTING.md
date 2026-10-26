@@ -8,7 +8,7 @@ bash tool/check.sh
 ```
 
 The check script runs formatting, strict analyzer diagnostics, readability
-metrics, package and example tests, the spotlight tests in Chrome, and
+metrics, package and example tests, the spotlight and binding-widget tests in Chrome, and
 `flutter pub publish --dry-run`. Chrome must be installed for the browser tests.
 The dry run checks the archive without uploading it; server-side name approval
 still happens during an actual publish.

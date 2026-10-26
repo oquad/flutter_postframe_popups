@@ -10,22 +10,21 @@ class SpotlightGeometry {
   /// Stores a validated local mask rectangle and its paint transform.
   const SpotlightGeometry({required this.maskRect, required this.transform});
 
-  /// Measures layout size, validates visibility, and resolves mask insets.
+  /// Validates a reported layout size, visibility, and resolved mask insets.
   factory SpotlightGeometry.measure(
     RenderBox target,
     RenderBox overlay,
     EdgeInsets insets, {
+    required Size size,
     OverlayChildLayoutInfo? layoutInfo,
   }) {
-    _requireLaidOut(target);
-    _requirePaintedProxy(target);
-    final (size, transform) = _layoutData(target, overlay, layoutInfo);
+    final transform = _validatedTransform(target, overlay, size, layoutInfo);
     final localRect = Offset.zero & size;
-    _requireVisibleTarget(target, overlay, localRect, transform);
-    final maskRect = insets.deflateRect(localRect);
-    _requireValidMask(maskRect);
 
-    return SpotlightGeometry(maskRect: maskRect, transform: transform);
+    return SpotlightGeometry(
+      maskRect: _maskRect(insets, localRect),
+      transform: transform,
+    );
   }
 
   /// The inset-adjusted rectangle in the target's local coordinate system.
@@ -35,17 +34,25 @@ class SpotlightGeometry {
   final Matrix4 transform;
 }
 
-(Size, Matrix4) _layoutData(
+Matrix4 _validatedTransform(
+  RenderBox target,
+  RenderBox overlay,
+  Size size,
+  OverlayChildLayoutInfo? info,
+) {
+  _requireLaidOut(target, size);
+  _requirePaintedProxy(target);
+  final transform = _paintTransform(target, overlay, info);
+  _requireVisibleTarget(target, overlay, Offset.zero & size, transform);
+
+  return transform;
+}
+
+Matrix4 _paintTransform(
   RenderBox target,
   RenderBox overlay,
   OverlayChildLayoutInfo? info,
-) {
-  if (info != null) {
-    return (info.childSize, info.childPaintTransform);
-  }
-
-  return (target.size, target.getTransformTo(overlay));
-}
+) => info?.childPaintTransform ?? target.getTransformTo(overlay);
 
 void _requireVisibleTarget(
   RenderBox target,
@@ -59,8 +66,8 @@ void _requireVisibleTarget(
   _requireVisibleAncestors(target, localRect);
 }
 
-void _requireLaidOut(RenderBox target) {
-  if (!target.attached || !target.hasSize || target.size.isEmpty) {
+void _requireLaidOut(RenderBox target, Size size) {
+  if (!target.attached || !target.hasSize || size.isEmpty) {
     throw SpotlightTargetNotVisibleError(
       'The target has no positive layout size.',
     );
@@ -167,4 +174,11 @@ void _requireValidMask(Rect maskRect) {
       'maskInsets must leave a finite, positive cutout size.',
     );
   }
+}
+
+Rect _maskRect(EdgeInsets insets, Rect localRect) {
+  final maskRect = insets.deflateRect(localRect);
+  _requireValidMask(maskRect);
+
+  return maskRect;
 }
